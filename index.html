@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Franck Nga - Playlist Archive</title>
+</head>
+<body>
+<script>
+const user = "franck_nga";
+const maxRows = 1000;
+
+async function generateM3U() {
+  const searchUrl =
+    `https://archive.org/advancedsearch.php?q=creator:${user} AND mediatype:audio&fl[]=identifier&rows=${maxRows}&page=1&output=json`;
+
+  const search = await fetch(searchUrl);
+  const data = await search.json();
+
+  let m3u = "#EXTM3U\n";
+
+  for (const item of data.response.docs) {
+    const id = item.identifier;
+    const meta = await fetch(`https://archive.org/metadata/${id}`).then(r => r.json());
+
+    for (const file of meta.files) {
+      if (file.name && file.name.match(/\.mp3$/i)) {
+        const title = file.name.replace(".mp3", "");
+        const url = `https://archive.org/download/${id}/${encodeURIComponent(file.name)}`;
+        m3u += `#EXTINF:-1,${title}\n${url}\n`;
+      }
+    }
+  }
+
+  document.body.innerText = m3u;
+  document.body.style.whiteSpace = "pre";
+}
+
+generateM3U();
+</script>
+</body>
+</html>
